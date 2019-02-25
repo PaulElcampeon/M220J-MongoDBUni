@@ -37,4 +37,9 @@ public class Critic {
   public void setNumComments(int numComments) {
     this.numComments = numComments;
   }
+
+  @Override
+  public String toString(){
+    return String.format("id: %s, No: %d",id,numComments);
+  }
 }

@@ -3,6 +3,7 @@ package mflix.api.daos;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoWriteException;
 import com.mongodb.ReadConcern;
+import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Aggregates;
@@ -26,9 +27,16 @@ import org.springframework.stereotype.Component;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import static com.mongodb.client.model.Accumulators.sum;
+import static com.mongodb.client.model.Aggregates.group;
+import static com.mongodb.client.model.Aggregates.limit;
+import static com.mongodb.client.model.Aggregates.sort;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Indexes.descending;
 import static com.mongodb.client.model.Updates.set;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -177,7 +185,18 @@ public class CommentDao extends AbstractMFlixDao {
    */
   public List<Critic> mostActiveCommenters() {
     List<Critic> mostActive = new ArrayList<>();
+
+    List<Bson> pipeline = Arrays.asList(group("$email",
+            sum("numComments", 1)),
+            sort(descending("numComments")),
+            limit(20));
+
+
+    commentCollection.aggregate(pipeline, Critic.class).iterator().forEachRemaining(e-> System.out.println(e));
+    commentCollection.aggregate(pipeline, Critic.class).iterator().forEachRemaining(e-> mostActive.add(new Critic(e.getId(), e.getNumComments())));
+
     // // TODO> Ticket: User Report - execute a command that returns the
+
     // // list of 20 users, group by number of comments. Don't forget,
     // // this report is expected to be produced with an high durability
     // // guarantee for the returned documents. Once a commenter is in the

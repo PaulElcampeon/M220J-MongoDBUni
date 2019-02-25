@@ -38,6 +38,7 @@ public class UserReportTest extends TicketTest {
     String mostActiveCommenter = "roger_ashton-griffiths@gameofthron.es";
     List<Critic> mostActive = this.dao.mostActiveCommenters();
     int expectedListSize = 20;
+
     Assert.assertEquals(
         "mostActiveComments() should return 20 results",
         expectedListSize,
