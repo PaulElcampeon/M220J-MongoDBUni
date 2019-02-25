@@ -138,8 +138,12 @@ public class UserDao extends AbstractMFlixDao {
   public Session getUserSession(String userId) {
     //TODO> Ticket: User Management - implement the method that returns Sessions for a given
     // userId
-    Document userQuery = new Document("userId",userId);
-    Session userSession = sessionsCollection.find(userQuery).limit(1).iterator().tryNext();
+    Document filterQuery = new Document("user_id",userId);
+    Session userSession = sessionsCollection
+            .find(filterQuery)
+            .limit(1)
+            .iterator()
+            .tryNext();
     return userSession;
   }
 
@@ -160,11 +164,13 @@ public class UserDao extends AbstractMFlixDao {
     // remove user sessions
     //TODO> Ticket: User Management - implement the delete user method
     //TODO > Ticket: Handling Errors - make this method more robust by
-    Document deleteQuery = new Document("email", email);
-    DeleteResult result = usersCollection.deleteOne(deleteQuery);
+    Document deleteQueryUser = new Document("email", email);
+    DeleteResult result = usersCollection.deleteOne(deleteQueryUser);
 
+    Document deleteQuerySession = new Document("user_id", email);
+    DeleteResult result1 = sessionsCollection.deleteOne(deleteQuerySession);
     // handling potential exceptions.
-    return result.wasAcknowledged();
+    return result.wasAcknowledged() && result1.wasAcknowledged();
   }
 
   /**
@@ -178,8 +184,17 @@ public class UserDao extends AbstractMFlixDao {
   public boolean updateUserPreferences(String email, Map<String, ?> userPreferences) {
     //TODO> Ticket: User Preferences - implement the method that allows for user preferences to
     // be updated.
-    Document queryFilter = new Document("email", email);
-    UpdateResult result = usersCollection.updateOne(queryFilter, set("preferences",userPreferences));
+    UpdateResult result;
+    if(userPreferences!= null) {
+
+      Document queryFilter = new Document("email", email);
+
+      result = usersCollection.updateOne(queryFilter, set("preferences", userPreferences));
+
+    } else {
+
+      throw new IncorrectDaoOperation("User preferences cannot be null");
+    }
     //TODO > Ticket: Handling Errors - make this method more robust by
     // handling potential exceptions when updating an entry.
     return result.wasAcknowledged();

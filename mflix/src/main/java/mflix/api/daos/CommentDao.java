@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static com.mongodb.client.model.Updates.set;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
@@ -80,11 +81,19 @@ public class CommentDao extends AbstractMFlixDao {
    */
   public Comment addComment(Comment comment) {
 
+    if(comment.getId() != null) {
+
+      commentCollection.insertOne(comment);
+
+    } else {
+
+      throw new IncorrectDaoOperation("CommentId is invalid");
+    }
     // TODO> Ticket - Update User reviews: implement the functionality that enables adding a new
     // comment.
     // TODO> Ticket - Handling Errors: Implement a try catch block to
     // handle a potential write exception when given a wrong commentId.
-    return null;
+    return comment;
   }
 
   /**
@@ -102,6 +111,21 @@ public class CommentDao extends AbstractMFlixDao {
    */
   public boolean updateComment(String commentId, String text, String email) {
 
+    Bson queryFilter = new Document("_id",new ObjectId(commentId));
+
+    Comment actualComment = commentCollection.find(new Document("_id", new ObjectId(commentId))).first();
+
+    if(email.equals(actualComment.getEmail())) {
+
+//      Bson query = new Document("text", text);
+//
+//      Bson setQuery = new Document("$set", query);
+
+      UpdateResult result = commentCollection.updateOne(queryFilter, set("text", text));
+
+      return result.wasAcknowledged();
+    }
+
     // TODO> Ticket - Update User reviews: implement the functionality that enables updating an
     // user own comments
     // TODO> Ticket - Handling Errors: Implement a try catch block to
@@ -117,6 +141,25 @@ public class CommentDao extends AbstractMFlixDao {
    * @return true if successful deletes the comment.
    */
   public boolean deleteComment(String commentId, String email) {
+
+    Bson queryFilter = new Document("_id",new ObjectId(commentId));
+
+    Long num = commentCollection.countDocuments(queryFilter);
+
+    if(num > 0) {
+
+      Comment actualComment = commentCollection.find(queryFilter).limit(1).iterator().tryNext();
+
+      if (email.equals(actualComment.getEmail())) {
+
+        DeleteResult result = commentCollection.deleteOne(queryFilter);
+
+        return result.getDeletedCount() == 1;
+      }
+
+      return false;
+    }
+
     // TODO> Ticket Delete Comments - Implement the method that enables the deletion of a user
     // comment
     // TIP: make sure to match only users that own the given commentId

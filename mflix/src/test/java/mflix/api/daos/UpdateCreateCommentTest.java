@@ -94,6 +94,9 @@ public class UpdateCreateCommentTest extends TicketTest {
                 .find(new Document("_id", new ObjectId(fakeCommentId)))
                 .first();
 
+    System.out.println(expectedCommentText);
+    System.out.println(actualComment.get("text"));
+
     Assert.assertEquals(
         "Comment text should match. Check updateComment implementation",
         expectedCommentText,

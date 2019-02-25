@@ -40,7 +40,8 @@ public class DeleteCommentTest extends TicketTest {
     this.dao = new CommentDao(mongoClient, databaseName);
 
     Document commentDoc = new Document("email", ownerEmail);
-    commentDoc.append("movie_id", "some_movie_id");
+//    commentDoc.append("movie_id", "some_movie_id");
+    commentDoc.append("movie_id", new ObjectId());
     commentDoc.append("text", "some text");
     commentDoc.append("name", "user name");
 

@@ -3,7 +3,6 @@ package mflix.api.daos;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
-
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -47,7 +46,20 @@ public class MovieDao extends AbstractMFlixDao {
         //TODO> Ticket: Handling Errors - implement a way to catch a
         //any potential exceptions thrown while validating a movie id.
         //Check out this method's use in the method that follows.
-        return true;
+        List<Bson> pipeline1 = new ArrayList<>();
+
+        Bson match = Aggregates.match(Filters.eq("_id", new ObjectId(movieId)));
+        pipeline1.add(match);
+//         TODO> Ticket: Get Comments - implement the lookup stage that allows the comments to
+//         retrieved with Movies.
+        Document movie = moviesCollection.aggregate(pipeline1).first();
+
+        if (movie!=null){
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -62,15 +74,33 @@ public class MovieDao extends AbstractMFlixDao {
             return null;
         }
 
-        List<Bson> pipeline = new ArrayList<>();
+        List<Bson> pipeline1 = new ArrayList<>();
         // match stage to find movie
         Bson match = Aggregates.match(Filters.eq("_id", new ObjectId(movieId)));
-        pipeline.add(match);
-        // TODO> Ticket: Get Comments - implement the lookup stage that allows the comments to
-        // retrieved with Movies.
-        Document movie = moviesCollection.aggregate(pipeline).first();
+        pipeline1.add(match);
+//         TODO> Ticket: Get Comments - implement the lookup stage that allows the comments to
+//         retrieved with Movies.
+        Document movie = moviesCollection.aggregate(pipeline1).first();
 
-        return movie;
+
+        List<Bson> pipeline2 = Arrays.asList(new Document("$match",
+                        new Document("title", movie.get("title").toString())),
+                new Document("$lookup",
+                        new Document("from", "comments")
+                                .append("let",
+                                        new Document("id", "$_id"))
+                                .append("pipeline", Arrays.asList(new Document("$match",
+                                                new Document("$expr",
+                                                        new Document("$eq", Arrays.asList("$movie_id", "$$id")))),
+                                        new Document("$sort",
+                                                new Document("date", -1L))))
+                                .append("as", "comments")));
+
+        Document movieWithComments = moviesCollection.aggregate(pipeline2).first();
+
+        System.out.println(movieWithComments.toString());
+
+        return movieWithComments;
     }
 
     /**
