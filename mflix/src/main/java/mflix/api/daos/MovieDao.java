@@ -1,5 +1,6 @@
 package mflix.api.daos;
 
+import com.mongodb.MongoWriteException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
@@ -52,7 +53,17 @@ public class MovieDao extends AbstractMFlixDao {
         pipeline1.add(match);
 //         TODO> Ticket: Get Comments - implement the lookup stage that allows the comments to
 //         retrieved with Movies.
-        Document movie = moviesCollection.aggregate(pipeline1).first();
+
+        Document movie;
+
+        try {
+
+            movie = moviesCollection.aggregate(pipeline1).first();
+
+        } catch(MongoWriteException e) {
+
+            return false;
+        }
 
         if (movie!=null){
 

@@ -1,5 +1,6 @@
 package mflix.api.daos;
 
+import com.mongodb.MongoWriteException;
 import com.mongodb.client.MongoClient;
 import mflix.api.models.User;
 import mflix.config.MongoDBConfiguration;
@@ -52,7 +53,7 @@ public class HandlingErrorsTest extends TicketTest {
     Assert.assertNull(movie);
   }
 
-  @Test(expected = IncorrectDaoOperation.class)
+  @Test(expected = MongoWriteException.class)
   public void testNoUserDups() {
     // creates the user for the first time
     uDao.addUser(testUser);
